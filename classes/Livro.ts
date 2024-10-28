@@ -3,6 +3,13 @@ import Prompt from "prompt-sync";
 
 const prompt = Prompt();
 
+interface LivroData {
+  titulo: string;
+  autor: string;
+  ISBN: string;
+  ano: number;
+}
+
 export class Livro {
   private _titulo: string;
   private _autor: string = "";
@@ -20,78 +27,100 @@ export class Livro {
     return this._ISBN;
   }
 
+  private validarDados(titulo: string, autor: string, ISBN: string, ano: number): boolean {
+    if (!titulo || !autor) {
+      console.log("Título e Autor são obrigatórios!");
+      return false;
+    }
+
+    if (!/^\d{13}$/.test(ISBN)) {
+      console.log("ISBN inválido! O ISBN deve conter 13 dígitos.");
+      return false;
+    }
+
+    if (isNaN(ano) || ano < 0 || ano > new Date().getFullYear()) {
+      console.log("Ano inválido! Deve ser um número positivo e não pode ser maior que o ano atual.");
+      return false;
+    }
+
+    return true;
+  }
+
   public adicionar(): void {
-    const livroData = {
+    if (!this.validarDados(this._titulo, this._autor, this._ISBN, this._ano)) {
+      return;
+    }
+
+    const livroData: LivroData = {
       titulo: this._titulo,
       autor: this._autor,
       ISBN: this._ISBN,
       ano: this._ano,
     };
 
-    let livros = []
+    let livros: LivroData[] = [];
     if (fs.existsSync("./data/livros.json")) {
       const data = fs.readFileSync("./data/livros.json", "utf-8");
       livros = JSON.parse(data);
     }
     livros.push(livroData);
 
-    fs.writeFileSync("./data/livros.json", JSON.stringify(livros, null, 2))
-
+    fs.writeFileSync("./data/livros.json", JSON.stringify(livros, null, 2));
   }
 
-  public atualizar(): void{
-
+  public atualizar(): void {
     let ISBN = prompt("Digite o ISBN do livro que deseja atualizar: ");
-
 
     if (fs.existsSync("./data/livros.json")) {
       const data = fs.readFileSync("./data/livros.json", "utf-8");
-      const livros = JSON.parse(data);
-      let livro = livros.find((livro: any) => livro.ISBN == ISBN);
+      const livros: LivroData[] = JSON.parse(data);
+      let livro = livros.find((livro: LivroData) => livro.ISBN === ISBN);
 
-      if(livro){
+      if (livro) {
         let titulo = prompt("Título: ");
         let autor = prompt("Autor: ");
-        let ISBN = prompt("ISBN: ");
-        let ano = prompt("Ano: ");
+        let novoISBN = prompt("ISBN: ");
+        let ano = parseInt(prompt("Ano: "));
+
+        if (!this.validarDados(titulo, autor, novoISBN, ano)) {
+          return;
+        }
 
         livro.titulo = titulo;
         livro.autor = autor;
-        livro.ISBN = ISBN;
+        livro.ISBN = novoISBN;
         livro.ano = ano;
 
-        fs.writeFileSync("./data/livros.json", JSON.stringify(livros, null, 2))
+        fs.writeFileSync("./data/livros.json", JSON.stringify(livros, null, 2));
       } else {
-        console.log("Livro não encontrado!")
+        console.log("Livro não encontrado!");
       }
     }
-    
   }
 
   public listar(): void {
     if (fs.existsSync("./data/livros.json")) {
       const data = fs.readFileSync("./data/livros.json", "utf-8");
-      const livros = JSON.parse(data);
-      console.table(livros)
+      const livros: LivroData[] = JSON.parse(data);
+      console.table(livros);
     } else {
-      console.log("Arquivo não encontrado!")
+      console.log("Arquivo não encontrado!");
     }
-  
   }
 
   public deletar(): void {
-    if (fs.existsSync("./data/livros.json")){
-      
+    if (fs.existsSync("./data/livros.json")) {
       let ISBN = prompt("Digite o ISBN do livro que deseja deletar: ");
       const data = fs.readFileSync("./data/livros.json", "utf-8");
-      let livros = JSON.parse(data);
-      let livro = livros.find((livro: any) => livro.ISBN == ISBN);
-      if(livro){
+      let livros: LivroData[] = JSON.parse(data);
+      let livro = livros.find((livro: LivroData) => livro.ISBN === ISBN);
+
+      if (livro) {
         let index = livros.indexOf(livro);
         livros.splice(index, 1);
-        fs.writeFileSync("./data/livros.json", JSON.stringify(livros, null, 2))
+        fs.writeFileSync("./data/livros.json", JSON.stringify(livros, null, 2));
       } else {
-        console.log("Livro não encontrado!")
+        console.log("Livro não encontrado!");
       }
     }
   }

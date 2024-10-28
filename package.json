@@ -19,7 +19,6 @@
     "ts-jest": "^29.1.5"
   },
   "scripts": {
-  "test": "jest"
-}
-
+    "test": "jest"
+  }
 }
